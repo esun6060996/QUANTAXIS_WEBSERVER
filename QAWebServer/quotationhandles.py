@@ -236,10 +236,17 @@ class stock_realtime(QABaseHandler):
         end = str(QA.QAUtil.QADate.QA_util_stamp2datetime(
             int(self.get_argument('prevTradeTime'))))[0:19]
 
-        #res = QA.QA_quotation(symbol, start, end, frequence, 'stock_cn','mongo', output=QA.OUTPUT_FORMAT.DATASTRUCT)
-        res = QA.QA_fetch_get_stock_min('tdx', symbol, start, end, frequence)
+        res = QA.QA_quotation_adv(symbol, start, end, frequence, 'stock_cn',
+                                  'auto', output=QA.OUTPUT_FORMAT.DATASTRUCT)
+        # res = QA.QA_fetch_get_stock_min('tdx', symbol, start, end, frequence)
 
-        x1 = res
+        x1 = res.data.reset_index()
+        # 日线数据的index.names[0]的name为'date',需要转成'datetime'
+        if 'date' in x1.columns:
+            x1 = x1.rename(columns={"date": "datetime"})
+        # 适配tdx,将volume转成vol
+        if 'volume' in x1.columns:
+            x1 = x1.rename(columns={"volume": "vol"})
 
         quote = QA.QA_fetch_get_stock_realtime('tdx', symbol)
         x1['datetime'] = pd.to_datetime(x1['datetime'])
@@ -265,19 +272,19 @@ class stock_realtime(QABaseHandler):
                         [
                                 float(quote['ask4'].values[0]),
                                 float(quote['ask_vol4'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['ask3'].values[0]),
                                 float(quote['ask_vol3'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['ask2'].values[0]),
                                 float(quote['ask_vol2'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['ask1'].values[0]),
                                 float(quote['ask_vol1'].values[0])
-                                ]
+                        ]
                     ],
                     "bids": [
                             [
@@ -287,19 +294,19 @@ class stock_realtime(QABaseHandler):
                         [
                                 float(quote['bid2'].values[0]),
                                 float(quote['bid_vol2'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['bid3'].values[0]),
                                 float(quote['bid_vol3'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['bid4'].values[0]),
                                 float(quote['bid_vol4'].values[0])
-                                ],
+                        ],
                         [
                                 float(quote['bid5'].values[0]),
                                 float(quote['bid_vol5'].values[0])
-                                ],
+                        ],
                     ]
                 }
             }
@@ -382,14 +389,13 @@ class index_realtime(QABaseHandler):
         self.write(x)
 
 
-
 class price_realtime(QABaseHandler):
     """此函数专门为macbookpro 带Bar用户准备
 
     传入code/market  即可获得实时报价
 
     如果啥也不传入, 则给一些常见的code/market组合
-    
+
     Arguments:
         QABaseHandler {[type]} -- [description]
 
@@ -409,7 +415,8 @@ class price_realtime(QABaseHandler):
             data = QA.QA_fetch_get_index_realtime('tdx', code)
         elif market == 'bond_cn':
             data = QA.QA_fetch_get_index_realtime('tdx', code)
-        self.write({'code': code, 'market': market, 'price': data.price.values[0]})
+        self.write({'code': code, 'market': market,
+                    'price': data.price.values[0]})
 
 
 if __name__ == '__main__':
