@@ -239,6 +239,7 @@ class stock_realtime(QABaseHandler):
         res = QA.QA_quotation_adv(symbol, start, end, frequence, 'stock_cn',
                                   'auto', output=QA.OUTPUT_FORMAT.DATASTRUCT)
         # res = QA.QA_fetch_get_stock_min('tdx', symbol, start, end, frequence)
+        
 
         x1 = res.data.reset_index()
         # 日线数据的index.names[0]的name为'date',需要转成'datetime'
